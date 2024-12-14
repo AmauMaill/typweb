@@ -13,6 +13,7 @@ class Website {
     private navLinks: NodeListOf<HTMLAnchorElement>;
     private languageService: LanguageService;
     private langToggle: HTMLButtonElement;
+    private readonly basePath: string;
 
     constructor() {
         this.contentDiv = document.getElementById('content') as HTMLElement;
@@ -20,8 +21,17 @@ class Website {
         this.langToggle = document.getElementById('langToggle') as HTMLButtonElement;
         this.languageService = new LanguageService();
         
+        // Get base path from repository name
+        this.basePath = this.getBasePath();
+        
         this.initializeEventListeners();
         this.loadInitialPage();
+    }
+
+    private getBasePath(): string {
+        const pathSegments = window.location.pathname.split('/');
+        const repoName = pathSegments[1];
+        return repoName ? `/${repoName}` : '';
     }
 
     private initializeEventListeners(): void {
@@ -51,21 +61,30 @@ class Website {
 
     private async loadInitialPage(): Promise<void> {
         // Get the current path from the URL
-        const path = window.location.pathname;
-        const page = path === '/' ? 'home' : path.slice(1);
+        const fullPath = window.location.pathname;
+        
+        // Remove the base path to get the actual page
+        let pagePath = fullPath.replace(this.basePath, '');
+        // Remove leading and trailing slashes
+        pagePath = pagePath.replace(/^\/+|\/+$/g, '');
+        
+        // If path is empty or just the base path, load home page
+        const page = pagePath === '' ? 'home' : pagePath;
+        
+        console.log('Initial page load:', { fullPath, pagePath, page });
         await this.loadPage(page);
     }
 
     private async navigateToPage(page: string): Promise<void> {
-        // Update URL
-        const basePath = '/typweb';
-        const url = page === 'home' ? `${basePath}/` : `${basePath}/${page}`;
+        // Update URL using the dynamic base path
+        const url = page === 'home' ? this.basePath || '/' : `${this.basePath}/${page}`;
         history.pushState({ page }, '', url);
         await this.loadPage(page);
     }
 
     private async loadPage(page: string): Promise<void> {
         try {
+            console.log('Loading page:', page);
             const html = await this.languageService.loadPageContent(page);
             
             // Update content area only
@@ -80,12 +99,6 @@ class Website {
             // Initialize page-specific features
             this.initializePageFeatures();
             
-            // Initialize projects loader if on projects page
-            if (page === 'projects') {
-                const { ProjectsLoader } = await import('./projects-loader');
-                const projectsLoader = new ProjectsLoader();
-                await projectsLoader.initialize();
-            }
         } catch (error) {
             console.error('Error loading page:', error);
             this.contentDiv.innerHTML = '<h1>Page Not Found</h1>';

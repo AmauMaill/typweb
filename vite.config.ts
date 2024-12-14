@@ -1,18 +1,22 @@
-import { defineConfig } from 'vite'
-import { resolve } from 'path'
+import { defineConfig } from 'vite';
 
 export default defineConfig({
-  base: './',
-  server: {
-    port: 3000
-  },
+  base: process.env.NODE_ENV === 'production' 
+    ? `/${process.env.GITHUB_REPOSITORY?.split('/')[1] || ''}` 
+    : '/',
   build: {
     outDir: 'dist',
-    sourcemap: true
+    rollupOptions: {
+      input: {
+        main: 'index.html',
+      },
+    },
   },
-  resolve: {
-    alias: {
-      '@': resolve(__dirname, './src')
+  // This ensures your pages are handled correctly during development
+  server: {
+    fs: {
+      // Allow serving files from one level up from the package root
+      allow: ['..']
     }
   }
-})
+});
