@@ -1,0 +1,14 @@
+.projects-container {
+    margin-top: 2rem;
+    padding: 1rem;
+}
+
+.project-category {
+    margin-bottom: 2rem;
+}
+
+.project-category h3 {
+    border-bottom: 2px solid var(--secondary-color);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+}

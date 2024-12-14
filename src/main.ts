@@ -1,4 +1,4 @@
-import './style.css'
+import './styles/main.css'
 import { LanguageService } from './language-service';
 
 interface ContactForm {

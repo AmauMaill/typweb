@@ -1,0 +1,41 @@
+/* Theme Icons */
+.sun-icon,
+.moon-icon {
+    width: 20px;
+    height: 20px;
+    color: currentColor;
+}
+
+body.dark-theme .sun-icon {
+    display: none;
+}
+
+body:not(.dark-theme) .moon-icon {
+    display: none;
+}
+
+/* Tech Stack Icons */
+.tech-icon {
+    width: 48px;
+    height: 48px;
+    color: var(--primary-color);
+    transition: transform 0.2s ease;
+}
+
+.tech-item:hover .tech-icon {
+    transform: scale(1.1);
+}
+
+/* Social Icons */
+.social-icon {
+    width: 24px;
+    height: 24px;
+    color: currentColor;
+}
+
+/* Scroll Indicator Icon */
+.scroll-icon {
+    width: 24px;
+    height: 24px;
+    color: var(--text-color);
+}
