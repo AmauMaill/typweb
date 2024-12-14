@@ -58,7 +58,8 @@ class Website {
 
     private async navigateToPage(page: string): Promise<void> {
         // Update URL
-        const url = page === 'home' ? '/' : `/${page}`;
+        const basePath = '/typweb';
+        const url = page === 'home' ? `${basePath}/` : `${basePath}/${page}`;
         history.pushState({ page }, '', url);
         await this.loadPage(page);
     }
