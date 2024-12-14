@@ -1,4 +1,5 @@
 import './style.css'
+import { LanguageService } from './language-service';
 
 interface ContactForm {
     name: string;
@@ -10,10 +11,15 @@ class Website {
     private currentPage: string = 'home';
     private contentDiv: HTMLElement;
     private navLinks: NodeListOf<HTMLAnchorElement>;
+    private languageService: LanguageService;
+    private langToggle: HTMLButtonElement;
 
     constructor() {
         this.contentDiv = document.getElementById('content') as HTMLElement;
         this.navLinks = document.querySelectorAll('.nav-link');
+        this.langToggle = document.getElementById('langToggle') as HTMLButtonElement;
+        this.languageService = new LanguageService();
+        
         this.initializeEventListeners();
         this.loadInitialPage();
     }
@@ -27,6 +33,14 @@ class Website {
                 this.navigateToPage(page);
             });
         });
+
+        // Handle language toggle
+        if (this.langToggle) {
+            this.langToggle.addEventListener('click', () => {
+                this.languageService.toggleLanguage();
+                this.loadPage(this.currentPage);
+            });
+        }
 
         // Handle browser back/forward buttons
         window.addEventListener('popstate', (e) => {
@@ -51,18 +65,17 @@ class Website {
 
     private async loadPage(page: string, updateState: boolean = true): Promise<void> {
         try {
-            const response = await fetch(`/src/pages/${page}.html`);
-            if (!response.ok) throw new Error(`Page ${page} not found`);
+            const html = await this.languageService.loadPageContent(page);
             
-            const html = await response.text();
-            this.contentDiv.innerHTML = html;
+            // Update content area only
+            if (this.contentDiv) {
+                this.contentDiv.innerHTML = html;
+            }
             
-            // Update current page
+            // Update current page and active link
             this.currentPage = page;
-            
-            // Update active navigation link
             this.updateActiveNavLink();
-            
+
             // Initialize page-specific features
             this.initializePageFeatures();
             
@@ -72,7 +85,6 @@ class Website {
                 const projectsLoader = new ProjectsLoader();
                 await projectsLoader.initialize();
             }
-            
         } catch (error) {
             console.error('Error loading page:', error);
             this.contentDiv.innerHTML = '<h1>Page Not Found</h1>';
@@ -125,18 +137,9 @@ class Website {
             alert('Failed to send message. Please try again.');
         }
     }
-
-    public init(): void {
-        // Check for saved theme preference
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'dark') {
-            document.body.classList.add('dark-theme');
-        }
-    }
 }
 
 // Initialize the website
 window.addEventListener('DOMContentLoaded', () => {
-    const website = new Website();
-    website.init();
+    new Website();
 });
