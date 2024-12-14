@@ -17,8 +17,12 @@
     margin: 0 0 1rem 0;
 }
 
+.project-card li {
+    margin-left: 2rem;
+}
+
 .project-card p {
-    margin: 0 0 1.5rem 0;
+    margin: 0 0 0.5rem 0;
 }
 
 /* Skill Cards */

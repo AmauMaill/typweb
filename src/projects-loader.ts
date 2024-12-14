@@ -21,6 +21,7 @@ export class ProjectsLoader {
 
         if (this.creatorProjectsDiv && this.contributorProjectsDiv) {
             await this.loadProjects();
+            this.styleProjectLinks();
         } else {
             console.error('Could not find project container divs');
         }
@@ -67,5 +68,17 @@ export class ProjectsLoader {
         } catch (error) {
             console.error('Error in loadProjects:', error);
         }
+    }
+
+    private styleProjectLinks() {
+        const projectCards = document.querySelectorAll('.project-card');
+        
+        projectCards.forEach(card => {
+            const links = card.querySelectorAll('a');
+            
+            links.forEach(link => {
+                link.classList.add('link-button', 'primary');
+            });
+        });
     }
 }
