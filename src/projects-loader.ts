@@ -29,8 +29,8 @@ export class ProjectsLoader {
 
     private async loadProjectFiles(directory: string): Promise<string[]> {
         try {
-            const enFiles = import.meta.glob('/src/pages/projects/**/en/*.md', { as: 'raw' }) as ImportedContent;
-            const frFiles = import.meta.glob('/src/pages/projects/**/fr/*.md', { as: 'raw' }) as ImportedContent;
+            const enFiles = import.meta.glob('/src/pages/projects/**/en/*.md', { query: '?raw', import: 'default' }) as ImportedContent;
+            const frFiles = import.meta.glob('/src/pages/projects/**/fr/*.md', { query: '?raw', import: 'default' }) as ImportedContent;
             
             const files = this.currentLang === 'fr' ? frFiles : enFiles;
             
@@ -39,7 +39,7 @@ export class ProjectsLoader {
                     .filter(file => file.includes(directory))
                     .map(async file => {
                         const content = await files[file]();
-                        return this.wrapInProjectCard(marked.parse(content));
+                        return this.wrapInProjectCard(await marked.parse(content));
                     })
             );
 

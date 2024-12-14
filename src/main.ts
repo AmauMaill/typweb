@@ -45,7 +45,7 @@ class Website {
         // Handle browser back/forward buttons
         window.addEventListener('popstate', (e) => {
             const page = e.state?.page || 'home';
-            this.loadPage(page, false);
+            this.loadPage(page);
         });
     }
 
@@ -53,7 +53,7 @@ class Website {
         // Get the current path from the URL
         const path = window.location.pathname;
         const page = path === '/' ? 'home' : path.slice(1);
-        await this.loadPage(page, false);
+        await this.loadPage(page);
     }
 
     private async navigateToPage(page: string): Promise<void> {
@@ -63,7 +63,7 @@ class Website {
         await this.loadPage(page);
     }
 
-    private async loadPage(page: string, updateState: boolean = true): Promise<void> {
+    private async loadPage(page: string): Promise<void> {
         try {
             const html = await this.languageService.loadPageContent(page);
             
