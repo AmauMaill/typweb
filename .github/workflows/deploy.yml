@@ -24,6 +24,10 @@ jobs:
     - name: Build website
       run: npm run build
 
+    - name: Add fallback for SPA
+      # Copy index.html to 404.html for SPA fallback in GitHub Pages
+      run: cp dist/index.html dist/404.html
+
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v4
       with:
