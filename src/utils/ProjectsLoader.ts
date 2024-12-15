@@ -33,8 +33,8 @@ export class ProjectsLoader {
       
         // Dynamically import markdown files based on the current language
         const files: Record<string, () => Promise<string>> = this.currentLang === 'fr'
-          ? import.meta.glob("/src/pages/projects/fr/{contributor,creator}/*.md", { query: '?raw', import: 'default' }) as Record<string, () => Promise<string>>
-          : import.meta.glob("/src/pages/projects/en/{contributor,creator}/*.md", { query: '?raw', import: 'default' }) as Record<string, () => Promise<string>>;
+          ? import.meta.glob("/src/pages/projects/{contributor,creator}/fr/*.md", { query: '?raw', import: 'default' }) as Record<string, () => Promise<string>>
+          : import.meta.glob("/src/pages/projects/{contributor,creator}/en/*.md", { query: '?raw', import: 'default' }) as Record<string, () => Promise<string>>;
       
         // Load and map resolved content to their file paths
         const importedFiles: ImportedContent = {};
