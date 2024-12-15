@@ -1,58 +1,51 @@
-import './styles/main.css'
-import { LanguageService } from './language-service';
+import './styles/main.css';
 
-interface ContactForm {
-    name: string;
-    email: string;
-    message: string;
-}
+import { LanguageService } from '@services/LanguageService';
+import { NavigationService } from '@services/NavigationService';
+import { ProjectsLoader } from '@utils/ProjectsLoader';
+import { ContactForm } from '@custom-types/index';
 
 class Website {
-    private currentPage: string = 'home';
-    private contentDiv: HTMLElement;
-    private navLinks: NodeListOf<HTMLAnchorElement>;
     private languageService: LanguageService;
-    private langToggle: HTMLButtonElement;
-    private readonly basePath: string;
+    private navigationService: NavigationService;
+    private projectsLoader: ProjectsLoader | null = null;
 
-    constructor() {
-        this.contentDiv = document.getElementById('content') as HTMLElement;
-        this.navLinks = document.querySelectorAll('.nav-link');
-        this.langToggle = document.getElementById('langToggle') as HTMLButtonElement;
+    constructor(
+        private contentDiv: HTMLElement,
+        private navLinks: NodeListOf<HTMLAnchorElement>,
+        private langToggle: HTMLButtonElement
+    ) {
         this.languageService = new LanguageService();
-        
-        // Get base path from repository name
-        this.basePath = this.getBasePath();
-        
+        this.navigationService = new NavigationService(contentDiv, navLinks);
         this.initializeEventListeners();
         this.loadInitialPage();
     }
 
-    private getBasePath(): string {
-        const pathSegments = window.location.pathname.split('/');
-        const repoName = pathSegments[1];
-        return repoName ? `/${repoName}` : '';
+    private initializeEventListeners(): void {
+        this.initializeNavigation();
+        this.initializeLanguageToggle();
+        this.initializeHistoryNavigation();
     }
 
-    private initializeEventListeners(): void {
-        // Handle navigation
+    private initializeNavigation(): void {
         this.navLinks.forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 const page = link.dataset.page || 'home';
-                this.navigateToPage(page);
+                this.navigationService.navigateToPage(page);
+                this.loadPage(page);
             });
         });
+    }
 
-        // Handle language toggle
-        if (this.langToggle) {
-            this.langToggle.addEventListener('click', () => {
-                this.languageService.toggleLanguage();
-                this.loadPage(this.currentPage);
-            });
-        }
+    private initializeLanguageToggle(): void {
+        this.langToggle?.addEventListener('click', () => {
+            this.languageService.toggleLanguage();
+            this.loadPage(this.navigationService.getCurrentPage());
+        });
+    }
 
-        // Handle browser back/forward buttons
+    private initializeHistoryNavigation(): void {
         window.addEventListener('popstate', (e) => {
             const page = e.state?.page || 'home';
             this.loadPage(page);
@@ -60,91 +53,69 @@ class Website {
     }
 
     private async loadInitialPage(): Promise<void> {
-        // Get the current path from the URL
-        const fullPath = window.location.pathname;
-        
-        // Remove the base path to get the actual page
-        let pagePath = fullPath.replace(this.basePath, '');
-        // Remove leading and trailing slashes
-        pagePath = pagePath.replace(/^\/+|\/+$/g, '');
-        
-        // If path is empty or just the base path, load home page
-        const page = pagePath === '' ? 'home' : pagePath;
-        
-        console.log('Initial page load:', { fullPath, pagePath, page });
-        await this.loadPage(page);
-    }
-
-    private async navigateToPage(page: string): Promise<void> {
-        // Update URL using the dynamic base path
-        const url = page === 'home' ? this.basePath || '/' : `${this.basePath}/${page}`;
-        history.pushState({ page }, '', url);
+        const pathSegments = window.location.pathname.split('/');
+        const page = pathSegments[pathSegments.length - 1] || 'home';
         await this.loadPage(page);
     }
 
     private async loadPage(page: string): Promise<void> {
         try {
-            console.log('Loading page:', page);
             const html = await this.languageService.loadPageContent(page);
-            
-            // Update content area only
-            if (this.contentDiv) {
-                this.contentDiv.innerHTML = html;
-            }
-            
-            // Update current page and active link
-            this.currentPage = page;
-            this.updateActiveNavLink();
-
-            // Initialize page-specific features
+            this.contentDiv.innerHTML = html;
             this.initializePageFeatures();
-            
         } catch (error) {
             console.error('Error loading page:', error);
             this.contentDiv.innerHTML = '<h1>Page Not Found</h1>';
         }
     }
 
-    private updateActiveNavLink(): void {
-        this.navLinks.forEach(link => {
-            const isActive = link.dataset.page === this.currentPage;
-            link.classList.toggle('active', isActive);
+    private initializePageFeatures(): void {
+        this.initializeThemeToggle();
+        this.initializeContactForm();
+        this.initializeProjects();
+    }
+
+    private initializeThemeToggle(): void {
+        const themeToggle = document.getElementById('themeToggle');
+        themeToggle?.addEventListener('click', () => {
+            document.body.classList.toggle('dark-theme');
+            const isDarkTheme = document.body.classList.contains('dark-theme');
+            localStorage.setItem('theme', isDarkTheme ? 'dark' : 'light');
         });
     }
 
-    private initializePageFeatures(): void {
-        // Initialize theme toggle if it exists on the current page
-        const themeToggle = document.getElementById('themeToggle');
-        if (themeToggle) {
-            themeToggle.addEventListener('click', () => this.toggleTheme());
-        }
-
-        // Initialize contact form if it exists on the current page
+    private initializeContactForm(): void {
         const contactForm = document.getElementById('contactForm');
-        if (contactForm) {
-            contactForm.addEventListener('submit', (e) => this.handleFormSubmit(e));
-        }
+        contactForm?.addEventListener('submit', this.handleFormSubmit);
     }
 
-    private toggleTheme(): void {
-        document.body.classList.toggle('dark-theme');
-        const isDarkTheme = document.body.classList.contains('dark-theme');
-        localStorage.setItem('theme', isDarkTheme ? 'dark' : 'light');
+    private initializeProjects(): void {
+        const creatorDiv = document.getElementById('creator-projects');
+        const contributorDiv = document.getElementById('contributor-projects');
+        
+        if (creatorDiv && contributorDiv) {
+            this.projectsLoader = new ProjectsLoader(
+                creatorDiv,
+                contributorDiv,
+                this.languageService.getCurrentLanguage()
+            );
+            this.projectsLoader.initialize();
+        }
     }
 
     private async handleFormSubmit(e: Event): Promise<void> {
         e.preventDefault();
+        const form = e.target as HTMLFormElement;
 
         const formData: ContactForm = {
-            name: (document.getElementById('name') as HTMLInputElement).value,
-            email: (document.getElementById('email') as HTMLInputElement).value,
-            message: (document.getElementById('message') as HTMLTextAreaElement).value
+            name: (form.querySelector('#name') as HTMLInputElement).value,
+            email: (form.querySelector('#email') as HTMLInputElement).value,
+            message: (form.querySelector('#message') as HTMLTextAreaElement).value
         };
 
         try {
-            // Here you would typically send the data to a server
             console.log('Form submitted:', formData);
-            (e.target as HTMLFormElement).reset();
+            form.reset();
             alert('Message sent successfully!');
         } catch (error) {
             console.error('Error submitting form:', error);
@@ -155,5 +126,17 @@ class Website {
 
 // Initialize the website
 window.addEventListener('DOMContentLoaded', () => {
-    new Website();
+    const contentDiv = document.getElementById('content');
+    const navLinks = document.querySelectorAll('.nav-link');
+    const langToggle = document.getElementById('langToggle');
+
+    if (contentDiv && navLinks.length && langToggle) {
+        new Website(
+            contentDiv as HTMLElement,
+            navLinks as NodeListOf<HTMLAnchorElement>,
+            langToggle as HTMLButtonElement
+        );
+    } else {
+        console.error('Required DOM elements not found');
+    }
 });
